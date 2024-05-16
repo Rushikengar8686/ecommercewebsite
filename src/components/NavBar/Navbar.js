@@ -4,12 +4,15 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCartShopping, faUser, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Button, Modal} from "react-bootstrap";
-import Form from 'react-bootstrap/Form';
+import { Button, Modal } from "react-bootstrap";
+import { toast } from 'react-toastify';
+import React from 'react';
 
+import Swal from 'sweetalert2';
 import { useDispatch, useSelector } from "react-redux";
 import { login, logout, selectcustId, selectIsLoggedIn, selectCartProducts, selectCustomerObj } from '../../store/slice/Userslice.js';
 import { fetchCartProducts } from '../../store/slice/Userslice.js';
+
 const Navbar = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
@@ -23,6 +26,8 @@ const Navbar = () => {
     const [showModal, setShowModal] = useState(false);
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    
+
     const loginobj = {
         userName: username,
         userPassword: password,
@@ -44,17 +49,32 @@ const Navbar = () => {
                 setCategoryList(result.data.data);
             }
         } catch (error) {
-            console.error("Error fetching category list:", error);
+            toast.error("Error fetching category list:", error);
         }
 
     }
 
     /******** Delete Cart item */
+    
     const deleteCart = async (product) => {
         debugger;
         const response = await axios.get("https://freeapi.gerasim.in/api/BigBasket/DeleteProductFromCartById?id=" + product.cartId);
-        if (response.data.result) {
-            alert("cart deleted");
+        Swal.fire({
+            title: 'Are you absolutely sure?',
+            text: "This action cannot be undone!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!',
+            cancelButtonText: 'Cancel'
+          })
+           if (response.data.result.isConfirmed) {
+            Swal.fire(
+                'Deleted!',
+                'Your file has been deleted.',
+                'success'
+              );
             dispatch(fetchCartProducts(custId));
         }
         else {
@@ -77,15 +97,15 @@ const Navbar = () => {
 
             const result = await axios.post("https://freeapi.gerasim.in/api/BigBasket/Login", loginobj);
             if (result.data.result) {
-
                 dispatch(login(result.data.data));
                 dispatch(fetchCartProducts(result.data.data.custId));
                 setShowModal(false);
 
             }
         } catch (error) {
-            console.log(error)
-            alert("Invalid username or password.");
+            toast.error(error, {
+                position: toast.POSITION.TOP_RIGHT,
+            },0);
         }
 
     };
@@ -127,11 +147,11 @@ const Navbar = () => {
         try {
             const response = await axios.post("https://freeapi.gerasim.in/api/BigBasket/RegisterCustomer", cusObj);
             if (response.data.result) {
-                alert("Register Successfully");
+                toast.success("Register Successfully");
                 closeModalregister();
             }
             else {
-                alert("Failed to register")
+                toast.error("Failed to Register")
             }
         }
         catch (error) {
@@ -243,7 +263,7 @@ const Navbar = () => {
                         <Modal.Body>
                             <div>
                                 <div>
-                                    
+
                                     <div>
                                         <div className="row">
                                             <div className='col-12'>
